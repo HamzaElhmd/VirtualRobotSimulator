@@ -1,4 +1,5 @@
 #include "../../include/VRS/Grid.h"
+#include <chrono>
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
@@ -76,13 +77,14 @@ void Grid::display() const {
 }
 
 void Grid::displayAnimated() const {
-    	for (const std::vector<Cell*>& row : cells) {
-        	for (const Cell* c : row) {
-            		std::cout << "|" << c->getShape() << "|";
-        	}
-        	std::cout << "\r";  // Bring cursor back to the start of the line
-        	std::cout.flush();  // Ensure immediate update
-    	}
+    std::cout << "\033[H\033[J";  // Works on Linux/macOS (ANSI escape)
+    
+    for (const std::vector<Cell*>& row : cells) {
+        for (const Cell* c : row) {
+            std::cout << "|" << c->getShape() << "|";
+        }
+        std::cout << std::endl;
+    }
 }
 
 void Grid::copyTo(Grid *newGrid) const {

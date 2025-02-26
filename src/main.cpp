@@ -1,6 +1,7 @@
 #include "../include/GBIA/Agent.h"
 #include "../include/VRS/Grid.h"
 #include <iostream>
+#include <unistd.h>
 
 int main () {
 
@@ -22,7 +23,6 @@ int main () {
 		std::cout << "Start ? (Press Any Key) ";
 		std::cin.get();
 
-		std::cout << "====================================================" << std::endl;
 		for (Action a: path) {
 			Robot *robot = dynamic_cast<Robot*>(grid.getRobotState());
 			if (!robot)
@@ -31,11 +31,9 @@ int main () {
 		
 			Direction d = static_cast<Direction>(a.getIdentifier());
 			robot->move(d);
-			grid.display();
+			grid.displayAnimated();
+			sleep(1);
 			
-			std::cout << "====================================================" << std::endl;
-			std::cout << "Continue ? "; 
-			std::cin.get();
 		}
 	} catch (std::exception& e) {
 		std::cerr << "An error occured : " << e.what() << std::endl; 
