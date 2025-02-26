@@ -17,7 +17,7 @@ class Astar : public IAlgorithm {
 		int depth;
 		std::priority_queue<IState*, std::vector<IState*>, std::function<bool(const IState*, const IState*)>> openList; // Current fringe generated
 
-		std::vector<IState*> closedList; // Visited states
+		std::vector<const IState*> closedList; // Visited states
 
 		explicit Astar() noexcept : depth(0),
 			 openList([this](const IState* s1, 
@@ -27,7 +27,7 @@ class Astar : public IAlgorithm {
 
 		std::priority_queue<IState*, std::vector<IState*>, 
 			std::function<bool(const IState*, const IState*)>> getOpenList() const noexcept { return openList; }
-		std::vector<IState*> getClosedList() const noexcept { return closedList; }
+		std::vector<const IState*> getClosedList() const noexcept { return closedList; }
 		int calculateHeuristic(const IState* s) { return depth + s->heuristic(); }
 
 		bool compare (const IState* a, const IState* b);

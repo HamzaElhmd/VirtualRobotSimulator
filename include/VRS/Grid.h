@@ -17,7 +17,7 @@ class Grid : public IState, public Observer {
 		void fillGoal(int xDim, int yDim);
 
 	public:
-		Grid(std::tuple<int, int>& Dims);
+		Grid(const std::tuple<int, int>& Dims);
 		~Grid() override = default;
 
 		std::vector<std::vector<Cell*>> getCells() const;
@@ -28,18 +28,21 @@ class Grid : public IState, public Observer {
 		Cell* getCell(const std::tuple<int, int>& coords);
 
 		void setCells(std::vector<std::vector<Cell*>>& newCells);
-		void setDimension(std::tuple<int, int>& newDims);
+		void setDimension(const std::tuple<int, int>& newDims);
 		void setRobot(const std::tuple<int, int>& newRobot);
 		void setGoal(const std::tuple<int, int>& newGoal);
 
 		void display() const;
+		void displayAnimated() const;
+		void copyTo(Grid *newGrid) const;
 
 		void update() override;
 		void initializeState(const double p) override;
 		bool goalState() const override;
-		std::vector<std::tuple<IState*, Action>> successor() const override;
+		std::vector<IState*> successor() const override;
 		int heuristic() const override;
 		bool compare(const void* state) const override;
+		void show() const override { display(); }
 };
 
 #endif

@@ -17,7 +17,7 @@ class Subject {
 	public:
 		virtual ~Subject() = default;
 		virtual void attach(Observer* obs) = 0;
-		virtual void detach(int& id_) = 0;
+		virtual void detach() = 0;
 		std::vector<Observer*> getObservers() const {return observers;}
 		void notify();
 };

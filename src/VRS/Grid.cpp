@@ -2,10 +2,11 @@
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
+#include <thread>
 
 #define BINOMIAL_MEAN(n, p) ((n) * (p))
 
-Grid::Grid(std::tuple<int, int>& Dims) {
+Grid::Grid(const std::tuple<int, int>& Dims) {
     dims = Dims;
 
     robotCoord = std::make_tuple(-1, -1);
@@ -23,7 +24,6 @@ std::tuple<int, int> Grid::getRobot() const { return robotCoord; }
 std::tuple<int, int> Grid::getGoal() const { return goalCoord; }
 
 Cell* Grid::getRobotState() const {
-	Cell *ptr;
 	//search for the robot in the grid
 	for (std::vector<Cell*> row : cells) {
 		for (Cell* c : row) {
@@ -36,34 +36,24 @@ Cell* Grid::getRobotState() const {
 }
 
 Cell* Grid::getCell(const std::tuple<int, int>& coords) {
-	for (std::vector<Cell*> row : cells) {
-		for (Cell* c : row) {
-			if (c->getCoordinates() == coords) {
-				return c;
-			}
-		}
-	}
-	return new Cell(std::make_tuple(-1, -1));
+	return cells[std::get<0>(coords)][std::get<1>(coords)];
 }
 
 void Grid::setCells(std::vector<std::vector<Cell*>>& newCells) {
 	cells = newCells;
 }
 
-void Grid::setDimension(std::tuple<int, int>& newDims) {
+void Grid::setDimension(const std::tuple<int, int>& newDims) {
 	dims = newDims;
 }
 
 void Grid::setRobot(const std::tuple<int, int>& newRobot) {
 	cells[std::get<0>(newRobot)][std::get<1>(newRobot)] = new Robot(newRobot);
 	
-	Observer *obs = this;  
-	((Robot*)cells[std::get<0>(newRobot)][std::get<1>(newRobot)])->attach(obs); 
 	if (robotCoord != std::make_tuple(-1, -1))
 		cells[std::get<0>(robotCoord)][std::get<1>(robotCoord)] = new FreeSpace(robotCoord);
 	
 	robotCoord = newRobot;
-
 }
 
 void Grid::setGoal(const std::tuple<int, int>& newGoal) {
@@ -82,6 +72,39 @@ void Grid::display() const {
 			std::cout << "|" << c->getShape() << "|";
 		}
 		std::cout<< std::endl;
+	}
+}
+
+void Grid::displayAnimated() const {
+    	for (const std::vector<Cell*>& row : cells) {
+        	for (const Cell* c : row) {
+            		std::cout << "|" << c->getShape() << "|";
+        	}
+        	std::cout << "\r";  // Bring cursor back to the start of the line
+        	std::cout.flush();  // Ensure immediate update
+    	}
+}
+
+void Grid::copyTo(Grid *newGrid) const {
+
+	int x = std::get<0>(dims);
+	int y = std::get<1>(dims);
+
+	newGrid->setDimension(dims);
+	newGrid->setGoal(goalCoord);
+	newGrid->setRobot(robotCoord);
+	newGrid->fillFreeSpace(x, y);
+
+	for (int i = 0; i < x; i++) {
+		for (int j = 0; j < y; j++) {
+			CellType t = cells[i][j]->getType();
+			if (t == OBSTACLE)
+				newGrid->cells[i][j] = new Obstacle(std::make_tuple(i, j));
+			else if (t == ROBOT)
+				newGrid->cells[i][j] = new Robot(std::make_tuple(i, j));
+			else if (t == GOAL)
+				newGrid->cells[i][j] = new Goal(std::make_tuple(i, j));
+		}
 	}
 }
 
@@ -106,7 +129,7 @@ void Grid::update() {
 
 	Cell* transState = getCell(std::make_tuple(xNew, yNew));
     	if (transState->getType() != FREE_SPACE && transState->getType() != GOAL) {
-        	state->setCoordinates(getRobot());  
+        	state->setCoordinates(getRobot());
         	throw IllegalMove("NOT FREE SPACE.");
     	} else {
         	setRobot(std::make_tuple(xNew, yNew)); 
@@ -185,19 +208,23 @@ bool Grid::goalState() const {
 
 }
 
-std::vector<std::tuple<IState*, Action>> Grid::successor() const {
-	std::vector<std::tuple<IState*, Action>> successors;
+std::vector<IState*> Grid::successor() const {
+	std::vector<IState*> successors;
 
 	for (Direction dir : {LEFT, UP, DOWN, RIGHT}) {
-		Grid *newGrid = new Grid(*this);
+		Grid *newGrid = new Grid(getDimension());
+		copyTo(newGrid);
+
 		Cell *robotCell = newGrid->getRobotState();
 		Robot *robot = dynamic_cast<Robot*>(robotCell);
-
 		robot->attach(newGrid);
-		std::cout << robot->getObservers().size() << std::endl;
+
 		if (robot->move(dir)) {
-			successors.push_back(std::make_tuple(newGrid, Action(dir)));
-		} 
+			const IState *state = static_cast<const IState*>(this);
+			newGrid->setParent(std::make_tuple(state, Action(dir)));
+			successors.push_back(newGrid);
+		}
+
 	}
 
 	return successors;

@@ -19,6 +19,8 @@ class IllegalMove : public std::exception {
 
 typedef enum {OBSTACLE, FREE_SPACE, ROBOT, GOAL, NONE} CellType;
 
+std::string cellTypeStr(const CellType& t);
+
 class Cell {
 	protected:
 		std::string shape;
@@ -60,6 +62,8 @@ class Goal : public Cell {
 
 typedef enum {LEFT, UP, DOWN, RIGHT} Direction;
 
+std::string directionStr(const Direction& dir);
+
 class Robot : public Cell, public Subject {
 	public:
 		Robot(const std::tuple<int, int>& newCoords);
@@ -68,7 +72,7 @@ class Robot : public Cell, public Subject {
 		bool move(const Direction& d);
 
 		void attach(Observer* obs) override;
-		void detach(int& id_) override;
+		void detach() override;
 };
 
 #endif
